@@ -9,6 +9,12 @@
 | `dev` (개발) | 여기서 브랜치를 따서 시작한다 |
 | `solution` · 태그 `solution-v0.2.0` | 정답 예시 — 커밋 5개로 나눠 정리한 결과 |
 
+## 어디서 하나
+
+**내 컴퓨터의 VS Code 안 터미널**에서 한다. 윈도는 터미널을 **Git Bash** 로 바꿔 둔다 (명령이 bash 문법이다).
+설치할 것: VS Code · Git · Python 3.11 이상. 폴더는 `C:\dev\` 처럼 영어로 된 짧은 경로에 (OneDrive·한글 경로는 피한다).
+처음이면 → [실습 환경 준비 — VS Code, 터미널, Git, Python](https://gangmini.com/learn/dev-setup/)
+
 ## 시작하기
 
 ```bash
@@ -17,7 +23,7 @@ cd memo-api-practice
 git switch dev
 
 python -m venv .venv
-# Windows: .venv\Scripts\activate    macOS/Linux: source .venv/bin/activate
+source .venv/Scripts/activate        # Git Bash 기준. macOS/Linux: source .venv/bin/activate · PowerShell: .venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 
 python smoke.py                      # 지금 상태가 돌아가는지 확인 (단계마다 다시 돌린다)
