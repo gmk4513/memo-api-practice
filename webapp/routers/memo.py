@@ -32,9 +32,9 @@ class MemoResponse(BaseModel):
         return cls(id=memo.id, title=memo.title, body=memo.body, created_at=memo.created_at)
 
 
-# ---- 서비스 꺼내기: create_app 이 손으로 만들어 둔 것 ----
+# ---- 서비스 꺼내기: 앱이 켜질 때 한 번 만든 컨테이너에서 ----
 def memo_service(request: Request) -> MemoService:
-    return request.app.state.memo_service
+    return request.app.state.container.memo.service()
 
 
 @router.post("", status_code=201, response_model=MemoResponse)
