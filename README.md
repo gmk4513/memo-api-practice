@@ -11,7 +11,7 @@
 
 ## 어디서 하나
 
-**내 컴퓨터의 VS Code 안 터미널**에서 한다. 윈도는 터미널을 **Git Bash** 로 바꿔 둔다 (명령이 bash 문법이다).
+**내 컴퓨터의 VS Code 안 터미널**에서 한다. 윈도우는 터미널을 **Git Bash** 로 바꿔 둔다 (명령이 bash 문법이다).
 설치할 것: VS Code · Git · Python 3.11 이상. 폴더는 `C:\dev\` 처럼 영어로 된 짧은 경로에 (OneDrive·한글 경로는 피한다).
 처음이면 → [실습 환경 준비 — VS Code, 터미널, Git, Python](https://gangmini.com/learn/dev-setup/)
 
