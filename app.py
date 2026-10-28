@@ -1,14 +1,16 @@
-"""1단계: 라우트에서 SQL 이 빠졌다. 규칙·권한 확인은 아직 여기 있다."""
-import json
+"""2단계: 규칙은 도메인(Memo)으로, 흐름은 서비스로. 라우트는 받아서 넘기기만 한다."""
 import sqlite3
 
 from fastapi import FastAPI, Header, HTTPException
 from pydantic import BaseModel
 
+from src.common.exceptions import InvalidInput, NotFound, PermissionDenied
 from src.memo.repository import SqliteMemoRepository
+from src.memo.service import MemoService
 
 app = FastAPI()
-repo = SqliteMemoRepository(sqlite3.connect("memo.db", check_same_thread=False))
+service = MemoService(SqliteMemoRepository(sqlite3.connect("memo.db", check_same_thread=False)))
+STATUS = {NotFound: 404, PermissionDenied: 403, InvalidInput: 400}
 
 
 class MemoIn(BaseModel):
@@ -16,58 +18,42 @@ class MemoIn(BaseModel):
     body: str = ""
 
 
-def _public(m: dict) -> dict:
-    return {k: m[k] for k in ("id", "title", "body", "created_at")}
+def _public(m) -> dict:
+    return {"id": m.id, "title": m.title, "body": m.body, "created_at": m.created_at}
 
 
-def _mine(memo_id: int, user: str) -> dict:
-    m = repo.find_memo(memo_id)
-    if m is None:
-        raise HTTPException(404, f"메모 {memo_id} 가 없습니다")
-    if m["owner"] != user:
-        raise HTTPException(403, "내 메모가 아닙니다")
-    return m
-
-
-def _check_title(title: str) -> None:
-    if not title.strip():
-        raise HTTPException(400, "제목이 비었습니다")
-    if len(title) > 50:
-        raise HTTPException(400, "제목은 50자까지입니다")
+def _call(fn, *args):
+    try:
+        return fn(*args)
+    except tuple(STATUS) as e:
+        raise HTTPException(STATUS[type(e)], str(e))
 
 
 @app.post("/memos", status_code=201)
 def create_memo(m: MemoIn, x_user: str = Header()):
-    _check_title(m.title)
-    memo = repo.create(x_user, m.title, m.body)
-    print(json.dumps({"level": "INFO", "msg": "메모를 만들었다", "memo_id": memo["id"]}, ensure_ascii=False))
-    return _public(memo)
+    return _public(_call(service.create_memo, x_user, m.title, m.body))
 
 
 @app.get("/memos")
 def list_memos(x_user: str = Header()):
-    return [_public(m) for m in repo.find_memos_by_owner(x_user)]
+    return [_public(m) for m in service.list_memos(x_user)]
 
 
 @app.get("/memos/{memo_id}")
 def get_memo(memo_id: int, x_user: str = Header()):
-    return _public(_mine(memo_id, x_user))
+    return _public(_call(service.get_memo, x_user, memo_id))
 
 
 @app.patch("/memos/{memo_id}")
 def rename_memo(memo_id: int, m: MemoIn, x_user: str = Header()):
-    _mine(memo_id, x_user)
-    _check_title(m.title)
-    repo.update_title(memo_id, m.title)
-    return _public(repo.find_memo(memo_id))
+    return _public(_call(service.rename_memo, x_user, memo_id, m.title))
 
 
 @app.delete("/memos/{memo_id}", status_code=204)
 def delete_memo(memo_id: int, x_user: str = Header()):
-    _mine(memo_id, x_user)
-    repo.delete(memo_id)
+    _call(service.delete_memo, x_user, memo_id)
 
 
 @app.get("/me")
 def me(x_user: str = Header()):
-    return {"user": x_user, "memo_count": len(repo.find_memos_by_owner(x_user))}
+    return {"user": x_user, "memo_count": service.count_memos(x_user)}
